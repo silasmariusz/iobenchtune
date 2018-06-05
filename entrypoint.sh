@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /root/profile
+
 /usr/sbin/sshd
 /etc/init.d/mysql start
 
