@@ -1,11 +1,17 @@
-#!/bin/sh
+#!/bin/bash
 
 /usr/sbin/sshd
 /etc/init.d/mysql start
 
-ifconfig
+echo
+echo IP address is:
+ifconfig | grep "inet addr" | grep -v "127.0.0.1"
+echo 
+echo SQL password is: $SQL_PASSWORD
+echo
+echo
 
-COUNT=3
+COUNT=5
 while [ $COUNT -gt 0 ] ;do
     echo -n "$COUNT "
     sleep 1
@@ -13,13 +19,9 @@ while [ $COUNT -gt 0 ] ;do
 done
 echo -e "... Ready!"
 
-#mysql -u root -e " \
-#  SET PASSWORD = PASSWORD('mysql'); \
-#  UPDATE mysql.user SET password = PASSWORD('mysql') WHERE user = 'root'; \
-#  DELETE FROM mysql.user WHERE user = ''; \
-#  GRANT ALL ON *.* TO 'root'@'%' IDENTIFIED BY 'mysql' WITH GRANT OPTION; \
-#  GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'mysql' WITH GRANT OPTION; \
-#  FLUSH PRIVILEGES; \
-#"
-
+touch /var/log/mysql/error.log
 tail -f /var/log/mysql/error.log
+
+/etc/init.d/mysql stop
+sync
+sleep 1

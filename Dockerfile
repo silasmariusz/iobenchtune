@@ -6,11 +6,15 @@ FROM ubuntu:14.04
 LABEL maintainer="silas@qnapclub.pl"
 MAINTAINER Silas Mariusz <silas@qnapclub.pl>
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV HOME=/home/ubuntu 											\
-    SHELL=/bin/bash
+ENV DEBIAN_FRONTEND=noninteractive									\
+    HOME=/home/ubuntu 											\
+    SHELL=/bin/bash											\
+    MYSQL_USER=mysql 											\
+    MYSQL_DATA_DIR=/var/lib/mysql 									\
+    MYSQL_RUN_DIR=/run/mysqld 										\
+    MYSQL_LOG_DIR=/var/log/mysql
 
-RUN mkdir -p $HOME
+RUN mkdir -p $HOME /root/scripts
 
 # Generate MySQL password
 RUN export SQL_PASSWORD="$(tr -dc 'A-HJ-NP-Za-km-z2-9' < /dev/urandom | dd bs=8 count=1 status=none)" 	\
@@ -18,26 +22,50 @@ RUN export SQL_PASSWORD="$(tr -dc 'A-HJ-NP-Za-km-z2-9' < /dev/urandom | dd bs=8 
 	&& echo -n "export SQL_PASSWORD=$SQL_PASSWORD" >> /root/.profile 					\
 	&& echo -n "$SQL_PASSWORD" > /root/mysql.pwd
 
-ENV MYSQL_USER=mysql 											\
-    MYSQL_DATA_DIR=/var/lib/mysql 									\
-    MYSQL_RUN_DIR=/run/mysqld 										\
-    MYSQL_LOG_DIR=/var/log/mysql
-
 
 # Install Basics: Utilities and some dev tools
 RUN apt-get update 											\
 	&& apt-get install -y --force-yes --no-install-recommends 					\
 		software-properties-common 								\
 		debconf-utils 										\
+		build-essential 									\
+		automake1.10 										\
+		autoconf 										\
+		m4 \
+		pkg-config \
+		libtool 										\
+		binutils 										\
+		coreutils 										\
+		unzip 											\
+		p7zip 											\
+		xz-utils 										\
 		curl 											\
 		ca-certificates 									\
 		openssh-server 										\
-		sudo 											\
 		net-tools 										\
-		build-essential 									\
 		bash 											\
-		unzip 											\
-		apt-transport-https
+		mysql-server-5.6 									\
+		bzr 											\
+		sysbench 										\
+		fio 											\
+		gnuplot 											\
+		ioping 											\
+		bonnie++ 										\
+		dos2unix 										\
+		mc 											\
+		ftp 											\
+		sendmail \
+		mysql-utilities mysql-common-5.6 libmysqlclient-dev mysql-client-5.6 libmysql++-dev mysqltuner \
+		git make gcc wget lua5.1 lua5.1-dev
+
+
+RUN wget https://luarocks.org/releases/luarocks-2.4.3.tar.gz && tar zxpf luarocks-2.4.3.tar.gz && cd luarocks-2.4.3 && ./configure && make bootstrap
+
+RUN bzr branch lp:~vadim-tk/sysbench/zipf-distribution \
+    && cd zipf-distribution \
+    && ./autogen.sh \
+    && ./configure --with-mysql \
+    && make && make install
 
 
 # Set default login and password for SSH root user...
@@ -58,9 +86,6 @@ RUN mkdir /var/run/sshd \
 #	&& debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $SQL_PASSWORD" 		\
 #	&& debconf-set-selections <<< "mysql-server-5.6 mysql-server/root_password password $SQL_PASSWORD" 		\
 #	&& debconf-set-selections <<< "mysql-server-5.6 mysql-server/root_password_again password $SQL_PASSWORD" 	\
-RUN apt-get install -y --force-yes --no-install-recommends 							\
-		mysql-server-5.6 											
-
 
 #		mysql-client
 #	&& mysql_secure_installation 									\
@@ -88,12 +113,19 @@ RUN apt-get autoclean 											\
 ADD entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
+ADD init.sh /sbin/init.sh
+RUN chmod 755 /sbin/init.sh
+
+ADD sysbench-fileio-ssd.sh /root/scripts/sysbench-fileio-ssd.sh
+RUN chmod 755 /root/scripts/sysbench-fileio-ssd.sh
+
 EXPOSE 22 3306
 
 VOLUME ["${MYSQL_DATA_DIR}", "${MYSQL_RUN_DIR}"]
 WORKDIR /root
 ENTRYPOINT ["/sbin/entrypoint.sh"]
 
+RUN /sbin/init.sh
 #RUN /sbin/entrypoint.sh
 
 #CMD ["/sbin/entrypoint.sh"]
