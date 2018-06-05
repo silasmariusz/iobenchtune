@@ -75,9 +75,9 @@ RUN apt-get install -y --force-yes --no-install-recommends 							\
 
 
 # Allow caching of NFS file share
-RUN apt-get install -y --force-yes --no-install-recommends 						\
-		cachefilesd 										\
-	&& echo "RUN=yes" | sudo tee /etc/default/cachefilesd
+#RUN apt-get install -y --force-yes --no-install-recommends 						\
+#		cachefilesd 										\
+#	&& echo "RUN=yes" | sudo tee /etc/default/cachefilesd
 
 
 RUN apt-get autoclean 											\
