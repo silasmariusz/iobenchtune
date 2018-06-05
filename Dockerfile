@@ -55,15 +55,16 @@ RUN mkdir /var/run/sshd \
 
 
 # Install MySQL
-RUN SQL_PASSWORD="$(cat /root/mysql.pwd)" 										\
-	&& debconf-set-selections <<< "mysql-server mysql-server/root_password password $SQL_PASSWORD" 			\
-	&& debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $SQL_PASSWORD" 		\
-	&& debconf-set-selections <<< "mysql-server-5.6 mysql-server/root_password password $SQL_PASSWORD" 		\
-	&& debconf-set-selections <<< "mysql-server-5.6 mysql-server/root_password_again password $SQL_PASSWORD" 	\
-	&& apt-get install -y --force-yes --no-install-recommends 							\
-		mysql-server-5.6 											\
-		mysql-client
+#RUN export SQL_PASSWORD="$(cat /root/mysql.pwd)" 									\
+#	&& debconf-set-selections <<< "mysql-server mysql-server/root_password password $SQL_PASSWORD" 			\
+#	&& debconf-set-selections <<< "mysql-server mysql-server/root_password_again password $SQL_PASSWORD" 		\
+#	&& debconf-set-selections <<< "mysql-server-5.6 mysql-server/root_password password $SQL_PASSWORD" 		\
+#	&& debconf-set-selections <<< "mysql-server-5.6 mysql-server/root_password_again password $SQL_PASSWORD" 	\
+RUN apt-get install -y --force-yes --no-install-recommends 							\
+		mysql-server-5.6 											
 
+
+#		mysql-client
 #	&& mysql_secure_installation 									\
 #	&& mysql_install_db 										\
 #	&& mysql -u root -password -e "use mysql; UPDATE user SET authentication_string=PASSWORD('${SQL_PASSWORD}') WHERE User='root'; flush privileges;" \
@@ -73,16 +74,6 @@ RUN SQL_PASSWORD="$(cat /root/mysql.pwd)" 										\
 # Set Timezone (Server/MySQL)
 #RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime 							\
 #	&& mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql --user=root --password=${SQL_PASSWORD} mysql
-
-
-# Add 1GB swap for memory overflow
-RUN fallocate -l 128M /swapfile 									\
-	&& chmod 600 /swapfile 										\
-	&& mkswap /swapfile 										\
-	&& swapon /swapfile 										\
-	&& echo "/swapfile   none	swap	sw	0   0" | sudo tee -a /etc/fstab 		\
-	&& printf "vm.swappiness=10\nvm.vfs_cache_pressure=50" | sudo tee -a /etc/sysctl.conf 		\
-	&& sudo sysctl -p
 
 
 # Allow caching of NFS file share
