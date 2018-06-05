@@ -85,11 +85,6 @@ RUN apt-get autoclean 											\
 	&& rm -rf /var/lib/apt/lists/*
 
 
-# Copy entrypoint.sh
-ADD reinitdb.sh /sbin/reinitdb.sh
-RUN chmod 755 /sbin/reinitdb.sh
-RUN /sbin/reinitdb.sh
-
 ADD entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
