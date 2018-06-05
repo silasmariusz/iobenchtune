@@ -86,15 +86,19 @@ RUN apt-get autoclean 											\
 
 
 # Copy entrypoint.sh
-COPY reinitdb.sh /sbin/reinitdb.sh
-COPY entrypoint.sh /sbin/entrypoint.sh
-#ADD entrypoint.sh /sbin/entrypoint.sh
-RUN chmod 755 /sbin/entrypoint.sh /sbin/reinitdb.sh
+ADD reinitdb.sh /sbin/reinitdb.sh
+RUN chmod 755 /sbin/reinitdb.sh
+RUN /sbin/reinitdb.sh
 
+ADD entrypoint.sh /sbin/entrypoint.sh
+RUN chmod 755 /sbin/entrypoint.sh
 
 EXPOSE 22 3306
+
 VOLUME ["${MYSQL_DATA_DIR}", "${MYSQL_RUN_DIR}"]
 WORKDIR /root
-ENTRYPOINT ["/sbin/reinitdb.sh"]
+ENTRYPOINT ["/sbin/entrypoint.sh"]
 
-CMD ["/sbin/entrypoint.sh"]
+#RUN /sbin/entrypoint.sh
+
+#CMD ["/sbin/entrypoint.sh"]
