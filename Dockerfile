@@ -10,20 +10,18 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV HOME=/home/ubuntu 											\
     SHELL=/bin/bash
 
+RUN mkdir -p $HOME
 
 # Generate MySQL password
 RUN export SQL_PASSWORD="$(tr -dc 'A-HJ-NP-Za-km-z2-9' < /dev/urandom | dd bs=8 count=1 status=none)" 	\
-	&& echo -en "\nexport SQL_PASSWORD=$SQL_PASSWORD\n" >> /root/.profile 				\
+	&& echo -n "export SQL_PASSWORD=$SQL_PASSWORD" >> ~/.profile 					\
+	&& echo -n "export SQL_PASSWORD=$SQL_PASSWORD" >> /root/.profile 					\
 	&& echo -n "$SQL_PASSWORD" > /root/mysql.pwd
-
 
 ENV MYSQL_USER=mysql 											\
     MYSQL_DATA_DIR=/var/lib/mysql 									\
     MYSQL_RUN_DIR=/run/mysqld 										\
     MYSQL_LOG_DIR=/var/log/mysql
-
-
-ENV SQL_PASSWORD="$(cat /root/mysql.pwd)"
 
 
 # Install Basics: Utilities and some dev tools
@@ -88,14 +86,15 @@ RUN apt-get autoclean 											\
 
 
 # Copy entrypoint.sh
-#COPY entrypoint.sh /sbin/entrypoint.sh
-ADD entrypoint.sh /sbin/entrypoint.sh
-RUN chmod 755 /sbin/entrypoint.sh
+COPY reinitdb.sh /sbin/reinitdb.sh
+COPY entrypoint.sh /sbin/entrypoint.sh
+#ADD entrypoint.sh /sbin/entrypoint.sh
+RUN chmod 755 /sbin/entrypoint.sh /sbin/reinitdb.sh
 
 
 EXPOSE 22 3306
 VOLUME ["${MYSQL_DATA_DIR}", "${MYSQL_RUN_DIR}"]
 WORKDIR /root
-ENTRYPOINT ["/sbin/entrypoint.sh"]
+ENTRYPOINT ["/sbin/reinitdb.sh"]
 
 CMD ["/sbin/entrypoint.sh"]
